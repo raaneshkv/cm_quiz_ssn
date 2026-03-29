@@ -119,71 +119,102 @@ const QuizGame = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Top bar */}
-      {phase !== "start" && phase !== "final" && phase !== "bonus-intro" && (
-        <div className="w-full px-4 pt-4 pb-2">
-          <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
-            <div className="flex-1">
-              <div className="h-2 rounded-full bg-muted overflow-hidden">
-                <motion.div
-                  className={isBonus ? "h-full bg-gradient-bonus rounded-full" : "h-full bg-gradient-neon rounded-full"}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${((currentOverall + 1) / totalQuestions) * 100}%` }}
-                  transition={{ duration: 0.5 }}
-                />
+    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <motion.div 
+          animate={{ x: [0, 50, 0], y: [0, 30, 0], opacity: [0.1, 0.2, 0.1] }}
+          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -top-[20%] -left-[10%] w-[50vw] h-[50vw] bg-[hsl(var(--neon-purple))]/20 blur-[100px] rounded-full"
+        />
+        <motion.div 
+          animate={{ x: [0, -40, 0], y: [0, 50, 0], opacity: [0.1, 0.2, 0.1] }}
+          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          className="absolute top-[60%] -right-[10%] w-[60vw] h-[60vw] bg-[hsl(var(--bonus-gold))]/10 blur-[120px] rounded-full"
+        />
+        <motion.div 
+          animate={{ scale: [1, 1.1, 1], opacity: [0.05, 0.1, 0.05] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-[30%] left-[40%] w-[30vw] h-[30vw] bg-correct/10 blur-[80px] rounded-full"
+        />
+      </div>
+
+      <div className="z-10 flex flex-col flex-1 w-full">
+        {/* Top bar */}
+        {phase !== "start" && phase !== "final" && phase !== "bonus-intro" && (
+          <div className="w-full px-4 pt-4 pb-2">
+            <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
+              <div className="flex-1">
+                <div className="h-2 rounded-full bg-muted overflow-hidden">
+                  <motion.div
+                    className={isBonus ? "h-full bg-gradient-bonus rounded-full" : "h-full bg-gradient-neon rounded-full"}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${((currentOverall + 1) / totalQuestions) * 100}%` }}
+                    transition={{ duration: 0.5 }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1 font-body">
+                  {currentOverall + 1} / {totalQuestions}
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground mt-1 font-body">
-                {currentOverall + 1} / {totalQuestions}
-              </p>
-            </div>
-            <div className={`font-display text-lg font-bold ${isBonus ? "text-bonus-gold" : "text-neon-purple"}`}>
-              Score: {score}
+              <div className={`font-display text-lg font-bold ${isBonus ? "text-bonus-gold" : "text-neon-purple"}`}>
+                Score: {score}
+              </div>
             </div>
           </div>
+        )}
+
+        {/* Main content */}
+        <div className="flex-1 flex items-center justify-center p-4">
+          <AnimatePresence mode="wait">
+            {phase === "start" && (
+              <motion.div key="start" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.4 }}>
+                <StartScreen onStart={handleStart} />
+              </motion.div>
+            )}
+
+            {(phase === "main" || phase === "bonus") && (
+              <motion.div key={`q-${phase}-${currentIndex}`} initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} transition={{ duration: 0.3 }}>
+                <QuestionCard
+                  movie={currentMovie}
+                  isBonus={isBonus}
+                  timeLeft={timeLeft}
+                  maxTime={maxTime}
+                  onSubmit={handleSubmit}
+                  questionNumber={currentIndex + 1}
+                />
+              </motion.div>
+            )}
+
+            {(phase === "main-reveal" || phase === "bonus-reveal") && (
+              <motion.div key={`r-${phase}-${currentIndex}`} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.3 }}>
+                <RevealCard movie={currentMovie} correct={lastCorrect!} userAnswer={userAnswer} isBonus={isBonus} onNext={handleNext} />
+              </motion.div>
+            )}
+
+            {phase === "bonus-intro" && (
+              <motion.div key="bonus-intro" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.4 }}>
+                <BonusIntro onStart={handleBonusStart} />
+              </motion.div>
+            )}
+
+            {phase === "final" && (
+              <motion.div key="final" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
+                <FinalScreen score={score} maxScore={mainRoundMovies.length * 10 + bonusRoundMovies.length * 20} bonusCorrect={bonusCorrect} onRestart={handleRestart} />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      )}
 
-      {/* Main content */}
-      <div className="flex-1 flex items-center justify-center p-4">
-        <AnimatePresence mode="wait">
-          {phase === "start" && (
-            <motion.div key="start" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.4 }}>
-              <StartScreen onStart={handleStart} />
-            </motion.div>
-          )}
-
-          {(phase === "main" || phase === "bonus") && (
-            <motion.div key={`q-${phase}-${currentIndex}`} initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} transition={{ duration: 0.3 }}>
-              <QuestionCard
-                movie={currentMovie}
-                isBonus={isBonus}
-                timeLeft={timeLeft}
-                maxTime={maxTime}
-                onSubmit={handleSubmit}
-                questionNumber={currentIndex + 1}
-              />
-            </motion.div>
-          )}
-
-          {(phase === "main-reveal" || phase === "bonus-reveal") && (
-            <motion.div key={`r-${phase}-${currentIndex}`} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.3 }}>
-              <RevealCard movie={currentMovie} correct={lastCorrect!} userAnswer={userAnswer} isBonus={isBonus} onNext={handleNext} />
-            </motion.div>
-          )}
-
-          {phase === "bonus-intro" && (
-            <motion.div key="bonus-intro" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.4 }}>
-              <BonusIntro onStart={handleBonusStart} />
-            </motion.div>
-          )}
-
-          {phase === "final" && (
-            <motion.div key="final" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
-              <FinalScreen score={score} maxScore={mainRoundMovies.length * 10 + bonusRoundMovies.length * 20} bonusCorrect={bonusCorrect} onRestart={handleRestart} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Footer */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1, duration: 0.5 }}
+          className="pb-6 pt-2 text-center text-muted-foreground font-display text-sm md:text-base font-medium tracking-widest z-20"
+        >
+          by RAANESH K V
+        </motion.div>
       </div>
     </div>
   );
