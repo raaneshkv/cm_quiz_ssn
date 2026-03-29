@@ -6,6 +6,7 @@ import QuestionCard from "./QuestionCard";
 import RevealCard from "./RevealCard";
 import BonusIntro from "./BonusIntro";
 import FinalScreen from "./FinalScreen";
+import LiveBackground from "./LiveBackground";
 
 type GamePhase = "start" | "main" | "main-reveal" | "bonus-intro" | "bonus" | "bonus-reveal" | "final";
 
@@ -121,6 +122,7 @@ const QuizGame = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
       {/* Animated Background Elements */}
+      <LiveBackground />
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
         <motion.div 
           animate={{ x: [0, 50, 0], y: [0, 30, 0], opacity: [0.1, 0.2, 0.1] }}
